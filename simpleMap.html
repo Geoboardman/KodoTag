@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Geolocation</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 95%;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="resources">Resources: 0</div>
+    <script>
+      // Note: This example requires that you consent to location sharing when
+      // prompted by your browser. If you see the error "The Geolocation service
+      // failed.", it means you probably did not give permission for the browser to
+      // locate you.
+      var myMarker = null;
+      var map, infoWindow;
+      var numDeltas = 100;
+      var delay = 10; //milliseconds
+      var i = 0;
+      var deltaLat;
+      var deltaLng;
+      var playerPos;
+      var mapCenter;
+      var mapRadius = 300;
+      var currentResources = 0;
+      var mapResourceNodes = [];
+
+      function randomNumber(min, max) {  
+          return Math.random() * (max - min) + min; 
+      }
+
+      function randomGeo(center, radius) {
+        console.log('center: %s radius: %s'. center, radius);
+        var y0 = center.latitude;
+        var x0 = center.longitude;
+        var rd = radius / 111300;
+
+        var u = Math.random();
+        var v = Math.random();
+
+        var w = rd * Math.sqrt(u);
+        var t = 2 * Math.PI * v;
+        var x = w * Math.cos(t);
+        var y = w * Math.sin(t);
+
+        return {
+            'lat': y + y0,
+            'lng': x + x0
+        };
+      }
+
+      function updateResources(val){
+        console.log('update val: ' + val);
+        currentResources += val;
+        document.getElementById('resources').innerHTML = "Resources: " + currentResources;
+      }      
+
+      function ResourceNode(val) {
+          var _this = this;                    
+          this.val = val;
+          var icon = {
+          url: "./material_01.png", // url
+          scaledSize: new google.maps.Size(32, 32), // scaled size
+          origin: new google.maps.Point(0,0), // origin
+          anchor: new google.maps.Point(0, 0) // anchor
+          };
+
+          this.mapMarker = new google.maps.Marker({
+          position: this.findMapPosition(),
+          map: map,
+          icon: icon
+          });
+
+          this.mapMarker.addListener('click', function(){
+            updateResources(_this.val);
+            _this.mapMarker.setMap(null);
+            setTimeout(_this.resetMarker, 3000);
+          });
+      }
+
+      ResourceNode.prototype.findMapPosition = function(){
+          return randomGeo(mapCenter, mapRadius)
+      };
+
+      ResourceNode.prototype.resetMarker = function(){
+        console.log('val on reset: ' + this.val);
+        this.mapMarker.setMap(map);
+      };        
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 47.6750829, lng: -122.1140707},
+          zoom: 20,
+          minZoom: 16,
+          maxZoom: 21,
+          styles: [
+          {
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#ebe3cd"
+              }
+            ]
+          },
+          {
+            "elementType": "labels",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#523735"
+              }
+            ]
+          },
+          {
+            "elementType": "labels.text.stroke",
+            "stylers": [
+              {
+                "color": "#f5f1e6"
+              }
+            ]
+          },
+          {
+            "featureType": "administrative",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#c9b2a6"
+              }
+            ]
+          },
+          {
+            "featureType": "administrative.land_parcel",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#dcd2be"
+              }
+            ]
+          },
+          {
+            "featureType": "administrative.land_parcel",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#ae9e90"
+              }
+            ]
+          },
+          {
+            "featureType": "administrative.neighborhood",
+            "stylers": [
+              {
+                "visibility": "off"
+              }
+            ]
+          },
+          {
+            "featureType": "landscape.natural",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "poi",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#93817c"
+              }
+            ]
+          },
+          {
+            "featureType": "poi.park",
+            "elementType": "geometry.fill",
+            "stylers": [
+              {
+                "color": "#a5b076"
+              }
+            ]
+          },
+          {
+            "featureType": "poi.park",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#447530"
+              }
+            ]
+          },
+          {
+            "featureType": "road",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#f5f1e6"
+              }
+            ]
+          },
+          {
+            "featureType": "road.arterial",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#fdfcf8"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#f8c967"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#e9bc62"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway.controlled_access",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#e98d58"
+              }
+            ]
+          },
+          {
+            "featureType": "road.highway.controlled_access",
+            "elementType": "geometry.stroke",
+            "stylers": [
+              {
+                "color": "#db8555"
+              }
+            ]
+          },
+          {
+            "featureType": "road.local",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#806b63"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#8f7d77"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.line",
+            "elementType": "labels.text.stroke",
+            "stylers": [
+              {
+                "color": "#ebe3cd"
+              }
+            ]
+          },
+          {
+            "featureType": "transit.station",
+            "elementType": "geometry",
+            "stylers": [
+              {
+                "color": "#dfd2ae"
+              }
+            ]
+          },
+          {
+            "featureType": "water",
+            "elementType": "geometry.fill",
+            "stylers": [
+              {
+                "color": "#b9d3c2"
+              }
+            ]
+          },
+          {
+            "featureType": "water",
+            "elementType": "labels.text.fill",
+            "stylers": [
+              {
+                "color": "#92998d"
+              }
+            ]
+          }
+        ]
+        });
+        infoWindow = new google.maps.InfoWindow;
+
+        // Try HTML5 geolocation.
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            playerPos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            mapCenter = position.coords;
+
+            infoWindow.setPosition(playerPos);
+            infoWindow.open(map);
+            map.setCenter(playerPos);
+            //createPlayingArea(pos, 300);
+            initPlayer(playerPos);
+            initResources();
+            map.addListener('click', function(e) {
+              //map.panTo(e.latLng);              
+              var newPos = [e.latLng.lat(), e.latLng.lng()];    
+              //console.log('newPos[0]: %s newPos[1]: %s', newPos[0], newPos[1]);
+              //console.log('pos[0]: %s pos[1]: %s', playerPos.lat, playerPos.lng);
+              myMarker.setPosition(e.latLng);
+              //transition(newPos);
+            });            
+          }, function() {
+            handleLocationError(true, infoWindow, map.getCenter());
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false, infoWindow, map.getCenter());
+        }
+      }
+
+      function initResources(){
+        max = 10;
+        min = 5;
+        count = randomNumber(min, max)
+        for(var i = 0; i < count; i++){
+          resourceNode = new ResourceNode(10);
+          mapResourceNodes.push(resourceNode);
+        }
+      }
+
+      function initPlayer(pos){
+        var icon = {
+          url: "./player_01.png", // url
+          scaledSize: new google.maps.Size(32, 32), // scaled size
+          origin: new google.maps.Point(0,0), // origin
+          anchor: new google.maps.Point(0, 0) // anchor
+      };
+
+        myMarker = new google.maps.Marker({
+        position: pos,
+        map: map,
+        icon: icon
+      });
+      }
+
+      function createPlayingArea(loc, size){
+        var playArea = new google.maps.Circle({
+          strokeColor: '#FF0000',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+          fillOpacity: 0.35,
+          map: map,
+          center: loc,
+          radius: size
+        });
+      }
+
+      function transition(newPos){
+          i = 0;
+          deltaLat = (newPos[0] - playerPos.lat)/numDeltas;
+          deltaLng = (newPos[1] - playerPos.lng)/numDeltas;
+          console.log('deltaLat: %s deltaLng: %s', deltaLat, deltaLng);
+          moveMarker();
+      }
+
+      function moveMarker(){
+        console.log('moving marker');
+        playerPos[0] += deltaLat;
+        playerPos[1] += deltaLng;
+        var latlng = new google.maps.LatLng(playerPos[0], playerPos[1]);
+        console.log('creating latlng: %s', latlng.lat);
+        myMarker.setTitle("Latitude:"+playerPos[0] + " | Longitude:" + playerPos[1]);
+        console.log('set position: %s', latlng);
+        myMarker.setPosition(latlng);
+        if(i!=numDeltas){
+            i++;
+            setTimeout(moveMarker, delay);
+        }
+      }      
+
+      function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+        infoWindow.setPosition(pos);
+        infoWindow.setContent(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+        infoWindow.open(map);
+      }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjm3FKlTLVmB5LX_83VruQXLrFtaowEpM&callback=initMap">
+    </script>
+  </body>
+</html>
