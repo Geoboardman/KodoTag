@@ -44,7 +44,6 @@
       }
 
       function randomGeo(center, radius) {
-        console.log('center: %s radius: %s'. center, radius);
         var y0 = center.latitude;
         var x0 = center.longitude;
         var rd = radius / 111300;
@@ -64,7 +63,6 @@
       }
 
       function updateResources(val){
-        console.log('update val: ' + val);
         currentResources += val;
         document.getElementById('resources').innerHTML = "Resources: " + currentResources;
       }      
@@ -90,8 +88,7 @@
             _this.mapMarker.setMap(null);
             setTimeout(function() {
               var newpos = randomGeo(mapCenter, mapRadius);
-              console.log('new ');
-              _this.mapMarker.position = newpos;
+              _this.mapMarker.setPosition(newpos);
               _this.mapMarker.setMap(map);
             }  , 3000);
           });
