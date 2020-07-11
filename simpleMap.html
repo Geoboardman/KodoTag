@@ -80,7 +80,7 @@
           };
 
           this.mapMarker = new google.maps.Marker({
-          position: this.findMapPosition(),
+          position: randomGeo(mapCenter, mapRadius),
           map: map,
           icon: icon
           });
@@ -88,7 +88,12 @@
           this.mapMarker.addListener('click', function(){
             updateResources(_this.val);
             _this.mapMarker.setMap(null);
-            setTimeout(_this.resetMarker, 3000);
+            setTimeout(function() {
+              var newpos = randomGeo(mapCenter, mapRadius);
+              console.log('new ');
+              _this.mapMarker.position = newpos;
+              _this.mapMarker.setMap(map);
+            }  , 3000);
           });
       }
 
@@ -96,9 +101,9 @@
           return randomGeo(mapCenter, mapRadius)
       };
 
-      ResourceNode.prototype.resetMarker = function(){
-        console.log('val on reset: ' + this.val);
-        this.mapMarker.setMap(map);
+      ResourceNode.prototype.resetMarker = function(mapMarker){
+        mapMarker.setMap(map);
+
       };        
 
       function initMap() {
